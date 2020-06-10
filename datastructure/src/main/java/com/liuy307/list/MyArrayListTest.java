@@ -29,5 +29,6 @@ public class MyArrayListTest {
         list1.remove(13);
         list1.removeRange(5, 15);
         //list1.add("a");
+        //dev分支
     }
 }
