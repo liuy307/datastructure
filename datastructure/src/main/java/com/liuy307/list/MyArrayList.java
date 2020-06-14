@@ -1,52 +1,53 @@
 package com.liuy307.list;
 
-import java.util.Arrays;
+import java.util.*;
+import java.util.function.Consumer;
 
 public class MyArrayList<E> {
     private static final Object[] EMPTY = {};
-    private static final Object[] DEFAULT_CAPCITY_EMPTY = {};
-    private static final int DEFAULT_CAPCITY = 20;
+    private static final Object[] DEFAULT_Capacity_EMPTY = {};
+    private static final int DEFAULT_Capacity = 20;
 
     private Object[] elementData;
     int size;
 
     public MyArrayList() {
-        this.elementData = DEFAULT_CAPCITY_EMPTY;
+        this.elementData = DEFAULT_Capacity_EMPTY;
     }
 
-    public MyArrayList(int initCapcity) {
-        if (initCapcity == 0)
+    public MyArrayList(int initCapacity) {
+        if (initCapacity == 0)
             this.elementData = EMPTY;
         else
-            this.elementData = new Object[initCapcity];
+            this.elementData = new Object[initCapacity];
     }
 
     public boolean add(E e) {
-        ensureCapcityInternal(size + 1);
+        ensureCapacityInternal(size + 1);
         elementData[size++] = e;
         return true;
     }
 
 
 
-    private void ensureCapcityInternal(int minCapcity) {
-        minCapcity = reviseCapcity(minCapcity);
-        if (minCapcity > elementData.length) //重要,判断需不需要扩容
-            grow(minCapcity);
+    private void ensureCapacityInternal(int minCapacity) {
+        minCapacity = reviseCapacity(minCapacity);
+        if (minCapacity > elementData.length) //重要,判断需不需要扩容
+            grow(minCapacity);
     }
 
-    private int reviseCapcity(int minCapcity) {
-        if (this.elementData == DEFAULT_CAPCITY_EMPTY)
-            return DEFAULT_CAPCITY;
-        return minCapcity;
+    private int reviseCapacity(int minCapacity) {
+        if (this.elementData == DEFAULT_Capacity_EMPTY)
+            return DEFAULT_Capacity;
+        return minCapacity;
     }
 
-    private void grow(int minCapcity) {
-        int oldCapcity = elementData.length;
-        int newCapcity = oldCapcity + (oldCapcity >> 1); //(oldCapcity>>1)要用括号，运算优先级
-        if (newCapcity < minCapcity)
-            newCapcity = minCapcity;
-        this.elementData = Arrays.copyOf(elementData, newCapcity);
+    private void grow(int minCapacity) {
+        int oldCapacity = elementData.length;
+        int newCapacity = oldCapacity + (oldCapacity >> 1); //(oldCapacity>>1)要用括号，运算优先级
+        if (newCapacity < minCapacity)
+            newCapacity = minCapacity;
+        this.elementData = Arrays.copyOf(elementData, newCapacity);
     }
 
     private String outOfBoundsMsg(int index) {
@@ -63,7 +64,7 @@ public class MyArrayList<E> {
 
     public boolean add(E e, int index) {
         rangeCheckForAdd(index);
-        ensureCapcityInternal(size + 1);
+        ensureCapacityInternal(size + 1);
         System.arraycopy(elementData, index, elementData, index + 1, size - index);
         elementData[index] = e;
         size++;
@@ -114,4 +115,56 @@ public class MyArrayList<E> {
         }
     }
 
+    public Object[] toArray() {
+//        return Arrays.copyOf(elementData, elementData.length);
+        return Arrays.copyOf(elementData, size); //返回非空元素的数组
+    }
+
+    public boolean addAll(int index, Collection<? extends E> c) {
+        rangeCheckForAdd(index);
+        Object[] a = c.toArray();
+        int len = a.length;
+        ensureCapacityInternal(size+len);
+        int numMoved = size - index;
+        if (numMoved > 0)
+            System.arraycopy(elementData, index, elementData, index + len, size-index);
+        System.arraycopy(a, 0, elementData, index, len);
+        size += len; //记得加size
+    }
+
+    private class Itr implements Iterator<E> {
+        int cursor;       // index of next element to return
+        int lastRet = -1; // index of last element returned; -1 if no such
+
+        @Override
+        public boolean hasNext() {
+            return false;
+        }
+
+        @Override
+        public E next() {
+            if(cursor >= size)
+                throw new NoSuchElementException();
+            E e = (E) MyArrayList.this.elementData[cursor];
+            lastRet = cursor;
+            cursor ++;
+            return e;
+        }
+
+        @Override
+        public void remove() {
+            MyArrayList.this.remove(lastRet);
+            cursor = lastRet;
+            lastRet = -1;
+        }
+
+        @Override
+        public void forEachRemaining(Consumer<? super E> action) {
+
+        }
+//    int expectedModCount = modCount;
+    }
+
 }
+
+
