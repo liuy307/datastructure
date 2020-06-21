@@ -1,170 +1,84 @@
 package com.liuy307.list;
 
-import java.util.*;
-import java.util.function.Consumer;
+import java.util.Arrays;
 
-public class MyArrayList<E> {
-    private static final Object[] EMPTY = {};
-    private static final Object[] DEFAULT_Capacity_EMPTY = {};
-    private static final int DEFAULT_Capacity = 20;
+public class MyArrayList<E>{
 
     private Object[] elementData;
-    int size;
+
+    private int size;
+
+    private static final int DEFAULT_CAPACITY = 8;
+    private static final Object[] DEFAULT_CAPACITY_EMPTY = {};
+    private static final Object[] EMPTY = {};
+
 
     public MyArrayList() {
-        this.elementData = DEFAULT_Capacity_EMPTY;
+        this.elementData = DEFAULT_CAPACITY_EMPTY;
     }
 
     public MyArrayList(int initCapacity) {
-        if (initCapacity == 0)
+        if(initCapacity == 0)
             this.elementData = EMPTY;
-        else
+        else if(initCapacity > 0)
             this.elementData = new Object[initCapacity];
+        else
+            throw new IllegalArgumentException("Illegal Capacity: "+ initCapacity);
     }
 
-    public boolean add(E e) {
-        ensureCapacityInternal(size + 1);
-        elementData[size++] = e;
-        return true;
+    public void add(E e) {
+        ensureCapacityInternal(size+1);
+        this.elementData[size++] = e;
     }
 
 
+    public void add(int index, E e) {
+        addRangCheck(index);
+        ensureCapacityInternal(size+1);
+        int moveNums = size - index;
+        System.arraycopy(this.elementData, index, this.elementData, index+1, moveNums);
+        this.elementData[index] = e;
+        size++;
+    }
+
+    void addRangCheck(int index) {
+        if(index < 0  || index > size)
+            throw new IllegalArgumentException("Illegal index: "+ index);
+    }
 
     private void ensureCapacityInternal(int minCapacity) {
-        minCapacity = reviseCapacity(minCapacity);
-        if (minCapacity > elementData.length) //重要,判断需不需要扩容
+        minCapacity = reviseMinCapacity(minCapacity);
+        if(minCapacity > this.elementData.length) {
             grow(minCapacity);
+        }
     }
 
-    private int reviseCapacity(int minCapacity) {
-        if (this.elementData == DEFAULT_Capacity_EMPTY)
-            return DEFAULT_Capacity;
+    private int reviseMinCapacity(int minCapacity) {
+        if(this.elementData == DEFAULT_CAPACITY_EMPTY) {
+            return Math.max(DEFAULT_CAPACITY, minCapacity);//注意
+        }
         return minCapacity;
     }
 
     private void grow(int minCapacity) {
-        int oldCapacity = elementData.length;
-        int newCapacity = oldCapacity + (oldCapacity >> 1); //(oldCapacity>>1)要用括号，运算优先级
-        if (newCapacity < minCapacity)
+        int oldCapacity = this.elementData.length;
+        int newCapacity = oldCapacity + (oldCapacity>>1);
+        if(newCapacity < minCapacity) //要确认需要容量和扩充后容量
             newCapacity = minCapacity;
-        this.elementData = Arrays.copyOf(elementData, newCapacity);
-    }
-
-    private String outOfBoundsMsg(int index) {
-        return "Index: "+index+", Size: "+size;
-    }
-    private void rangeCheck(int index) {
-        if (index >= size)
-            throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
-    }
-    private void rangeCheckForAdd(int index) {
-        if (index > size || index < 0)
-            throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
-    }
-
-    public boolean add(E e, int index) {
-        rangeCheckForAdd(index);
-        ensureCapacityInternal(size + 1);
-        System.arraycopy(elementData, index, elementData, index + 1, size - index);
-        elementData[index] = e;
-        size++;
-        return true;
-    }
-
-    E elementData(int index) {
-        return (E) elementData[index];
+        this.elementData = Arrays.copyOf(this.elementData, newCapacity);
+        //this.size = newCapacity; 不能在这加
     }
 
     public E remove(int index) {
-        rangeCheck(index);
-        E oldValue = elementData(index);
-        int moveNum =  size-index-1;
-
-        if(moveNum > 0)
-            System.arraycopy(elementData, index+1, elementData, index, size-index-1);
-        elementData[--size] = null; //记得回收资源
-
-        return oldValue;
-
-
+        removeRangeCheck(index);
+        E oldData = (E)this.elementData[index];
+        int moveNums = size - index - 1;
+        System.arraycopy(this.elementData, index+1, this.elementData, index, moveNums);
+        this.elementData[--size] = null;
+        return oldData;
     }
-
-    public void removeRange(int fromIndex, int toIndex) {
-        int moveNum =  size - toIndex;
-        if (moveNum > 0)
-            System.arraycopy(elementData, toIndex+1, elementData, fromIndex, moveNum);
-
-        int newSize = size - (toIndex - fromIndex);
-        for (int i = newSize; i < size; i++) {
-            elementData[i] = null;
-        }
-        size = newSize;
+    private void removeRangeCheck(int index) {
+        if(index < 0 || index >=size)
+            throw new IllegalArgumentException("Illegal index: "+ index);
     }
-
-    public int size() {
-        return size;
-    }
-
-    boolean isEmpty() {
-        return size == 0;
-    }
-
-    void clear() {
-        for (int i = 0; i < size; i++) {
-            elementData[i] = null;
-        }
-    }
-
-    public Object[] toArray() {
-//        return Arrays.copyOf(elementData, elementData.length);
-        return Arrays.copyOf(elementData, size); //返回非空元素的数组
-    }
-
-    public boolean addAll(int index, Collection<? extends E> c) {
-        rangeCheckForAdd(index);
-        Object[] a = c.toArray();
-        int len = a.length;
-        ensureCapacityInternal(size+len);
-        int numMoved = size - index;
-        if (numMoved > 0)
-            System.arraycopy(elementData, index, elementData, index + len, size-index);
-        System.arraycopy(a, 0, elementData, index, len);
-        size += len; //记得加size
-    }
-
-    private class Itr implements Iterator<E> {
-        int cursor;       // index of next element to return
-        int lastRet = -1; // index of last element returned; -1 if no such
-
-        @Override
-        public boolean hasNext() {
-            return false;
-        }
-
-        @Override
-        public E next() {
-            if(cursor >= size)
-                throw new NoSuchElementException();
-            E e = (E) MyArrayList.this.elementData[cursor];
-            lastRet = cursor;
-            cursor ++;
-            return e;
-        }
-
-        @Override
-        public void remove() {
-            MyArrayList.this.remove(lastRet);
-            cursor = lastRet;
-            lastRet = -1;
-        }
-
-        @Override
-        public void forEachRemaining(Consumer<? super E> action) {
-
-        }
-//    int expectedModCount = modCount;
-    }
-
 }
-
-
